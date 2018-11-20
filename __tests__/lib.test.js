@@ -1,4 +1,4 @@
-const { getProcessor, getLibrary, jestRunner, mergeUnits } = require('./lib');
+const { getProcessor, getLibrary, jestRunner, mergeUnits } = require('../src/lib');
 
 let unit = (name, tests) => ({ describe: name, tests: tests });
 let testSingle   = (name, single, expect) => ({ it: name, single, expect });
