@@ -38,8 +38,8 @@ function cloneOrPull(url, repoDir, branch, shouldPull) {
 }
 
 // returns a Promise
-function ensureCachedRepos(cacheDir, shouldPull) {
-  if (!cacheDir) throw new Error("cache dir is not specified");
+function ensureCachedRepos(shouldPull) {
+  let cacheDir = getDefaultCacheDir();
   mkdirp(cacheDir);
   return Promise.resolve()
     .then(() => cloneOrPull("https://github.com/citation-style-language/locales",
@@ -194,7 +194,7 @@ function getDefaultCacheDir() {
 }
 
 function _cacheLoc(r) {
-  return path.join(cacheDir, r);
+  return path.join(getDefaultCacheDir(), r);
 }
 
 function readInputFiles(args) {
@@ -226,7 +226,7 @@ function readInputFiles(args) {
     units = mergeUnits(units, nxtUnits);
   }
 
-  let out = { style, library, units, jurisdictionDirs: args.jurisdictionDirs };
+  let out = { style, library, units, jurisdictionDirs: args.jurisdictionDirs || [] };
   return out;
 }
 
@@ -236,7 +236,6 @@ module.exports = {
   produceSingle,
   produceSequence,
   ensureCachedRepos,
-  getDefaultCacheDir,
   readInputFiles,
 }
 

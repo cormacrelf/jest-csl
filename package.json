@@ -5,6 +5,9 @@
   "bin": {
     "jest-csl": "./src/cli.js"
   },
+  "scripts": {
+    "test": "jest"
+  },
   "dependencies": {
     "citeproc": "^2.1.210",
     "commander": "^2.19.0",

@@ -1,4 +1,4 @@
-module.exports = require('./src/lib');
+module.exports = {};
 module.exports = Object.assign({}, module.exports, require('./src/jest'));
-module.exports = Object.assign({}, module.exports, require('./src/raw'));
+module.exports = Object.assign({}, module.exports, require('./src/results'));
 module.exports.setup = require('./setup')

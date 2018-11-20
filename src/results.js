@@ -1,5 +1,10 @@
 const { getProcessor, produceSingle, produceSequence, readInputFiles } = require('./lib');
 
+// This generates a JS array of each of the test units, with each test
+// transformed to include `result` and whether it `passed`. This is useful for
+// generating documentation or making a custom view of the results, a bit like
+// a jest reporter but without losing the test case information and metadata.
+
 // args: {
 //   csl: string path to a CSL file,
 //   libraries: array of string paths to exported CSL-JSON libraries,

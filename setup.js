@@ -1,5 +1,5 @@
-const { ensureCachedRepos, getDefaultCacheDir } = require('./src/lib');
+const { ensureCachedRepos } = require('./src/lib');
 
 module.exports = async (globalConfig) => {
-  await ensureCachedRepos(getDefaultCacheDir());
+  await ensureCachedRepos();
 }
