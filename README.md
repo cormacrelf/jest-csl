@@ -223,6 +223,21 @@ Setting
 Results in all three tests being run, with "should a" preserved, "should b" 
 overridden and "should c" added.
 
+### Further splitting of test suites
+
+For convenience, you can split a large test suite into multiple files, and 
+combine them all with a glob. Use a level of directories or a naming scheme to 
+separate groups that should be strictly before or after one another.
+
+```javascript
+{
+  // ...
+  suites: ["./test/core/*.yaml", "./test/extended/*.yaml"]
+}
+```
+
+The same works for `jurisdictionDirs` and `libraries`.
+
 ### Running your tests
 
     yarn test

@@ -8,6 +8,7 @@ const os = require('os');
 const osenv = require('osenv');
 const uuid = require('uuid');
 const yaml = require('js-yaml');
+const glob = require('glob');
 const xdgBasedir = require('xdg-basedir');
 const fs = require('fs');
 const fse = require('fs-extra');
@@ -197,6 +198,12 @@ function _cacheLoc(r) {
   return path.join(getDefaultCacheDir(), r);
 }
 
+function expandGlobs(gs) {
+  return (gs || []).flatMap(s => {
+    return glob.sync(s);
+  });
+}
+
 function readInputFiles(args) {
   let style = fs.readFileSync(args.csl, 'utf8');
   if (!style) {
@@ -205,7 +212,8 @@ function readInputFiles(args) {
 
   let library = [];
 
-  for (var lib of args.libraries) {
+  let libraries = expandGlobs(args.libraries);
+  for (var lib of libraries) {
     var libStr = fs.readFileSync(lib, 'utf8');
     if (libStr == null) {
       _bail("library file " + lib + "empty or nonexistent");
@@ -220,13 +228,16 @@ function readInputFiles(args) {
     _bail('no test args.suites provided');
   }
   let units = [];
-  for (let suite of args.suites) {
+  let suites = expandGlobs(args.suites);
+  for (let suite of suites) {
     let unitsStr = fs.readFileSync(suite, 'utf8');
     let nxtUnits = yaml.safeLoad(unitsStr);
     units = mergeUnits(units, nxtUnits);
   }
 
-  let out = { style, library, units, jurisdictionDirs: args.jurisdictionDirs || [] };
+  let jurisdictionDirs = expandGlobs(args.jurisdictionDirs);
+
+  let out = { style, library, units, jurisdictionDirs };
   return out;
 }
 
