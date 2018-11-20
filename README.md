@@ -1,5 +1,8 @@
 # `jest-csl`
 
+![npm](https://img.shields.io/npm/v/jest-csl.svg)
+![build](https://img.shields.io/travis/com/cormacrelf/jest-csl.svg)
+
 This is a library to make testing [Citation Style Language][csl] definitions 
 easier using [`Jest`][jest]. It includes:
 
