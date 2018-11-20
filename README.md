@@ -193,22 +193,22 @@ combinations will override previous ones.
 
 ```yaml
 # core.spec.yaml
-describe: "Unit"
-tests:
-  - it: "should a"
-    ...
-  - it: "should b"
-    ...
+- describe: "Unit"
+  tests:
+    - it: "should a"
+      ...
+    - it: "should b"
+      ...
 
 # extended.spec.yaml
-describe: "Unit"
-tests:
-  - it: "should b"
-    single: "override"
-    expect: "override"
-  - it: "should c"
-    single: "new"
-    expect: "new"
+- describe: "Unit"
+  tests:
+    - it: "should b"
+      single: "override"
+      expect: "override"
+    - it: "should c"
+      single: "new"
+      expect: "new"
 ```
 
 Setting
@@ -222,6 +222,22 @@ Setting
 
 Results in all three tests being run, with "should a" preserved, "should b" 
 overridden and "should c" added.
+
+#### Skipping or isolating tests
+
+You can add a `mode` to a test with the value `skip` or `only`. If it's `skip`, 
+it will be skipped; if >= 1 test has `only`, every test that isn't labelled 
+`only` will be skipped. Also, any test that does not have an `expect` key will 
+be skipped as a test stub, so you can write lots of unwritten tests as a to-do 
+list.
+
+```yaml
+- describe: "Unit"
+  tests:
+    - it: "should b"
+      mode: skip
+      ...
+```
 
 ### Further splitting of test suites
 
@@ -250,3 +266,24 @@ quit).
     yarn jest-csl update
 
 This will attempt to update your cached locales and style-modules.
+
+### Collecting test results
+
+Before, you defined a test configuration that would export a plain-object 
+description of itself if it wasn't running in Jest. You can use that now.
+
+```javascript
+const { cslTestResults } = require('jest-csl');
+const config = require('./test/my-configuration.test');
+let { results, engine } = cslTestResults(config);
+console.log(results);
+```
+
+This generates a JS array of each of the test units, with each test
+transformed to include `result` and whether it `passed`. This is useful for
+generating documentation or making a custom view of the results, a bit like
+a jest reporter but without losing the test case information and metadata.
+
+`engine` is a `citeproc-js` Engine pre-loaded with your libraries.
+`engine.retrieveItem('citeKey')` may be useful to you.
+

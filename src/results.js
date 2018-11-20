@@ -24,6 +24,7 @@ function rawProcessUnits(engine, units) {
   units.forEach((unit) => {
     if (unit.tests) {
       unit.tests.forEach(test => {
+        // TODO: handle skipped tests
         if (test.single && test.expect) {
           let res = produceSingle(engine, test.single);
           results.push({ ...test, result: res, passed: res === test.expect });
