@@ -159,7 +159,7 @@ example:
         <i>John's Diary</i> 124.
 ```
 
-for more complex combined citations, use 'sequence' to test the
+For more complex combined citations, use 'sequence' to test the
 in-texts/footnotes generated for a sequence of clusters of cites.
 
 ```yaml
@@ -177,6 +177,25 @@ in-texts/footnotes generated for a sequence of clusters of cites.
         - Doe, <i>Miscellaneous Writings</i>, 2001, p. 5; see also <i>ibid</i> etc.
         - <i>Ibid</i>.
 ```
+
+To test the abbreviations found in the Abbreviation Filter:
+
+```yaml
+- describe: "a"
+  tests:
+    - it: "should x"
+      ...
+      abbreviations:
+        - jurisdiction: default
+          hereinafter:
+            doe2001: Misc
+          container-title:
+            American Something Journal: ASJ
+```
+
+See this command's output for a list of allowed categories.
+
+    node -e 'var c=require('citeproc');console.log(Object.keys(new c.AbbreviationSegments()))'
 
 ### Combining test suites
 
@@ -222,6 +241,21 @@ Setting
 Results in all three tests being run, with "should a" preserved, "should b" 
 overridden and "should c" added.
 
+### Further splitting of test suites
+
+For convenience, you can split a large test suite into multiple files, and 
+combine them all with a glob. Use a level of directories or a naming scheme to 
+separate groups that should be strictly before or after one another.
+
+```javascript
+{
+  // ...
+  suites: ["./test/core/*.yaml", "./test/extended/*.yaml"]
+}
+```
+
+The same works for `jurisdictionDirs` and `libraries`.
+
 #### Skipping or isolating tests
 
 You can add a `mode` to a test with the value `skip` or `only`. If it's `skip`, 
@@ -237,21 +271,6 @@ list.
       mode: skip
       ...
 ```
-
-### Further splitting of test suites
-
-For convenience, you can split a large test suite into multiple files, and 
-combine them all with a glob. Use a level of directories or a naming scheme to 
-separate groups that should be strictly before or after one another.
-
-```javascript
-{
-  // ...
-  suites: ["./test/core/*.yaml", "./test/extended/*.yaml"]
-}
-```
-
-The same works for `jurisdictionDirs` and `libraries`.
 
 ### Running your tests
 

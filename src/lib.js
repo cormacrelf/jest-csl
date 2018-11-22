@@ -15,6 +15,8 @@ const fse = require('fs-extra');
 const mkdirp = require('mkdirp');
 const git = require('nodegit');
 
+const { normalizeKey, lookupKey, makeGetAbbreviation } = require('./getAbbreviation');
+
 function cloneOrPull(url, repoDir, branch, shouldPull) {
   let repo;
   return git.Repository.open(repoDir)
@@ -54,14 +56,7 @@ function ensureCachedRepos(shouldPull) {
   ;
 }
 
-// function _fallback(repo, file) {
-//     var xhr = new XMLHttpRequest();
-//     xhr.open('GET', `https://raw.githubusercontent.com/${repo}/master/${file}`, false);
-//     xhr.send(null);
-//     return xhr.status === 200 && xhr.responseText;
-// }
-
-const citeprocSys = (citations, jurisdictionDirs) => ({
+const citeprocSys = (citations, jurisdictionDirs, myAbbreviations, gotAbbreviationCache) => ({
   retrieveLocale: function (lang) {
     // console.log('language:', lang);
     let p = path.join(_cacheLoc('locales'), 'locales-'+lang+'.xml');
@@ -69,11 +64,13 @@ const citeprocSys = (citations, jurisdictionDirs) => ({
     return locale;
   },
 
-  retrieveItem: function(id){
+  retrieveItem(id){
     return citations[id];
   },
 
-  retrieveStyleModule: function(jurisdiction, preference) {
+  getAbbreviation: makeGetAbbreviation(myAbbreviations, gotAbbreviationCache),
+
+  retrieveStyleModule(jurisdiction, preference) {
     jurisdiction = jurisdiction.replace(/\:/g, "+");
     var id = preference
       ? "juris-" + jurisdiction + "-" + preference + ".csl"
@@ -104,7 +101,7 @@ const citeprocSys = (citations, jurisdictionDirs) => ({
 });
 
 // @param library Array of CSL-JSON item objects.
-function _readLibrary(library) {
+function readLibrary(library) {
   let citations = {};
   let itemIDs = new Set();
   for (var i=0,ilen=library.length;i<ilen;i++) {
@@ -116,33 +113,12 @@ function _readLibrary(library) {
   return [citations, [...itemIDs]]
 }
 
-function getProcessor(styleStr, library, jurisdictionDirs = []) {
-  let [citations, itemIDs] = _readLibrary(library);
-  var proc = new CSL.Engine(citeprocSys(citations, jurisdictionDirs), styleStr);
-  proc.updateItems(itemIDs);
-  return proc;
-};
-
-function produceSingle(engine, single, format) {
-  // engine.makeCitationCluster([single], 'html') is broken, but it's meant to be faster.
-  // (it tries to access 'disambig of undefined'... not helpful)
-  // (node_modules/citeproc/citeproc_commonjs.js +10874)
-  let out = produceSequence(engine, [[single]], format || 'html')
-  return out[0];
-}
-
 function _atIndex(c, i) {
   return {
     citationID: "CITATION-"+i,
     properties: { noteIndex: i },
     citationItems: c
   }
-}
-
-function produceSequence(engine, clusters, format) {
-  let citations = clusters.map((c, i) => _atIndex(c, i+1))
-  let out = engine.rebuildProcessorState(citations, format || 'html')
-  return out.map(o => o[2]);
 }
 
 function _addTestsToMap(m, u) {
@@ -240,7 +216,7 @@ function normalizeItalics(testString) {
   return testString.replace(new RegExp("</i>(\\s*)<i>"), "$1")
 }
 
-function readInputFiles(args) {
+function readConfigFiles(args) {
   let style = fs.readFileSync(args.csl, 'utf8');
   if (!style) {
     _bail("style not loaded");
@@ -263,9 +239,17 @@ function readInputFiles(args) {
   if (args.suites.length === 0) {
     _bail('no test args.suites provided');
   }
+
+  let jurisdictionDirs = expandGlobs(args.jurisdictionDirs);
+
+  let out = { style, library, jurisdictionDirs };
+  return out;
+}
+
+function readTestUnits(suites) {
   let units = [];
-  let suites = expandGlobs(args.suites);
-  for (let suite of suites) {
+  let _suites = expandGlobs(suites);
+  for (let suite of _suites) {
     let unitsStr = fs.readFileSync(suite, 'utf8');
     let nxtUnits = yaml.safeLoad(unitsStr);
     units = mergeUnits(units, nxtUnits);
@@ -276,21 +260,82 @@ function readInputFiles(args) {
       tests: unit.tests.map(stripWhitespace).map(insertMissingPageLabels)
     }
   });
+  return units;
+}
 
-  let jurisdictionDirs = expandGlobs(args.jurisdictionDirs);
+class TestEngine {
+  constructor(args) {
+    let { style, library, jurisdictionDirs } = readConfigFiles(args);
+    let [citations, itemIDs] = readLibrary(library);
 
-  let out = { style, library, units, jurisdictionDirs };
-  return out;
+    this.abbreviations = {};
+    this.sysAbbreviationCache = null;
+
+    const sys = citeprocSys(
+      citations,
+      jurisdictionDirs,
+      () => this.abbreviations,
+      cache => { this.sysAbbreviationCache = cache; }
+    );
+
+    this.engine = new CSL.Engine(sys, style);
+    this.engine.updateItems(itemIDs);
+  }
+
+  retrieveItem(item) {
+    return this.engine.retrieveItem(item);
+  }
+
+  setAbbreviations(sets) {
+    this.abbreviations = {
+      default: new CSL.AbbreviationSegments()
+    };
+    if (this.sysAbbreviationCache) {
+      Object.keys(this.sysAbbreviationCache).forEach(k => delete this.sysAbbreviationCache[k]);
+      this.sysAbbreviationCache['default'] = new CSL.AbbreviationSegments();
+    }
+    if (!sets) return;
+    sets.forEach(set => {
+      let jurisdiction = set.jurisdiction || 'default';
+      let categories = Object.keys(new CSL.AbbreviationSegments());
+      categories.forEach(cat => {
+        let kvs = set[cat] || {};
+        Object.entries(kvs).forEach(e => {
+          this.addAbbreviation(jurisdiction, cat, e[0], e[1]);
+        })
+      });
+    })
+  }
+
+  produceSingle(single, format, abbreviations) {
+    // engine.makeCitationCluster([single], 'html') is broken, but it's meant to be faster.
+    // (it tries to access 'disambig of undefined'... not helpful)
+    // (node_modules/citeproc/citeproc_commonjs.js +10874)
+    let out = this.produceSequence([[single]], format || 'html', abbreviations)
+    return out[0];
+  }
+
+  produceSequence(clusters, format, abbreviations) {
+    this.setAbbreviations(abbreviations);
+    let citations = clusters.map((c, i) => _atIndex(c, i+1))
+    let out = this.engine.rebuildProcessorState(citations, format || 'html')
+    return out.map(o => o[2]);
+  }
+
+  addAbbreviation(jurisdiction, category, key, value) {
+    this.abbreviations[jurisdiction] = this.abbreviations[jurisdiction] || new CSL.AbbreviationSegments();
+    let k = lookupKey(normalizeKey(key));
+    this.abbreviations[jurisdiction][category][k] = value;
+    // console.log('added:', key, '->', value);
+  }
 }
 
 module.exports = {
   mergeUnits,
-  getProcessor,
-  produceSingle,
-  produceSequence,
   ensureCachedRepos,
-  readInputFiles,
   normalizeItalics,
   insertMissingPageLabels,
+  TestEngine,
+  readTestUnits,
 }
 

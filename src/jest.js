@@ -1,10 +1,11 @@
-const { getProcessor, produceSingle, produceSequence, readInputFiles, normalizeItalics } = require('./lib');
+const { TestEngine, readTestUnits, normalizeItalics } = require('./lib');
 
 // these functions are to be run from within the jest context
 // (ie with describe() and friends globally defined already.)
 
 // args: {
 //   csl: string path to a CSL file,
+//   jurisdictionDirs: array of string paths to jurisdiction directories
 //   libraries: array of string paths to exported CSL-JSON libraries,
 //   suites: array of string paths to YAML test suites
 // }
@@ -12,8 +13,8 @@ function jestCSL(args) {
   if (typeof jest === 'undefined') {
     return;
   }
-  let { style, library, units, jurisdictionDirs } = readInputFiles(args);
-  let engine = getProcessor(style, library, jurisdictionDirs);
+  let units = readTestUnits(args.suites);
+  let engine = new TestEngine(args);
 
   units.forEach(unit => {
     describe(unit.describe, () => {
@@ -40,10 +41,10 @@ function jestCSL(args) {
 
 function jestTestCase(engine, test) {
   if (test.single && test.expect) {
-    let out = produceSingle(engine, test.single, test.format);
+    let out = engine.produceSingle(test.single, test.format, test.abbreviations);
     expect(normalizeItalics(out)).toBe(normalizeItalics(test.expect));
   } else if (test.sequence && test.expect) {
-    let out = produceSequence(engine, test.sequence, test.format);
+    let out = engine.produceSequence(test.sequence, test.format, test.abbreviations);
     expect(out.map(normalizeItalics)).toMatchObject(test.expect.map(normalizeItalics));
   }
 }

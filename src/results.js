@@ -1,4 +1,4 @@
-const { getProcessor, produceSingle, produceSequence, readInputFiles, normalizeItalics } = require('./lib');
+const { TestEngine, readTestUnits, normalizeItalics } = require('./lib');
 
 // This generates a JS array of each of the test units, with each test
 // transformed to include `result` and whether it `passed`. This is useful for
@@ -11,8 +11,8 @@ const { getProcessor, produceSingle, produceSequence, readInputFiles, normalizeI
 //   suites: array of string paths to YAML test suites
 // }
 function cslTestResults(args) {
-  let { style, library, units, jurisdictionDirs } = readInputFiles(args);
-  let engine = getProcessor(style, library, jurisdictionDirs);
+  let units = readTestUnits(args.suites);
+  let engine = new TestEngine(args);
   // console.log(engine.locale['en-GB'].terms.page);
   return {
     engine: engine,
@@ -34,11 +34,11 @@ function rawProcessUnits(engine, units) {
         } else if (!test.expect) {
           _tests.push({ ...test, type: 'stub', passed: false })
         } else if (test.single && test.expect) {
-          let res = produceSingle(engine, test.single, test.format);
+          let res = engine.produceSingle(test.single, test.format, test.abbreviations);
 
           _tests.push({ ...test, type: 'single', result: res, passed: normalizeItalics(res) === normalizeItalics(test.expect) });
         } else if (test.sequence && test.expect) {
-          let res = produceSequence(engine, test.sequence, test.format);
+          let res = engine.produceSequence(test.sequence, test.format, test.abbreviations);
           _tests.push({ ...test, type: 'sequence', result: res, passed: sequenceMatches(test.expect, res) });
         }
       })
