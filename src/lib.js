@@ -127,7 +127,7 @@ function produceSingle(engine, single, format) {
   // engine.makeCitationCluster([single], 'html') is broken, but it's meant to be faster.
   // (it tries to access 'disambig of undefined'... not helpful)
   // (node_modules/citeproc/citeproc_commonjs.js +10874)
-  let out = produceSequence(engine, [{ cluster: [single]}], format || 'html')
+  let out = produceSequence(engine, [[single]], format || 'html')
   return out[0];
 }
 
@@ -135,7 +135,7 @@ function _atIndex(c, i) {
   return {
     citationID: "CITATION-"+i,
     properties: { noteIndex: i },
-    citationItems: c.cluster
+    citationItems: c
   }
 }
 
@@ -216,10 +216,7 @@ function insertMissingPageLabels(test) {
   if (test.sequence) {
     return {
       ...test,
-      sequence: test.sequence.map(s => ({
-        ...s,
-        cluster: s.cluster.map(immut)
-      }))
+      sequence: test.sequence.map(s => s.map(immut))
     }
   }
   return test;

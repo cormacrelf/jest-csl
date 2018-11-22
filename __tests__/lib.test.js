@@ -20,10 +20,10 @@ describe('insertMissingPageLabels', () => {
       .toMatchObject({ single: {locator: "5", label: "section"} })
     expect(insertMissingPageLabels({ single: {locator: "5"} }))
       .toMatchObject({ single: {locator: "5", label: "page"} })
-    expect(insertMissingPageLabels({ sequence: [{cluster: [{locator: "5", label: "section"}]}] }))
-      .toMatchObject({ sequence: [{cluster: [{locator: "5", label: "page", label: "section"}]}] });
-    expect(insertMissingPageLabels({ sequence: [{cluster: [{locator: "5"}]}] }))
-      .toMatchObject({ sequence: [{cluster: [{locator: "5", label: "page"}]}] });
+    expect(insertMissingPageLabels({ sequence: [[{locator: "5", label: "section"}]] }))
+      .toMatchObject({ sequence: [[{locator: "5", label: "page", label: "section"}]] });
+    expect(insertMissingPageLabels({ sequence: [[{locator: "5"}]] }))
+      .toMatchObject({ sequence: [[{locator: "5", label: "page"}]] });
   })
 })
 

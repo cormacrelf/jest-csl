@@ -170,11 +170,9 @@ in-texts/footnotes generated for a sequence of clusters of cites.
   tests:
     - it: "should render plain ibids for the same locator"
       sequence:
-        - cluster:
-          - { id: "doe2001", locator: "5", label: "page" }
-          - { id: "doe2001", locator: "5", label: "page", prefix: "see also", suffix: "etc" }
-        - cluster:
-          - { id: "doe2001", locator: "5", label: "page" }
+        - [ { id: "doe2001", locator: "5", label: "page" },
+            { id: "doe2001", locator: "5", label: "page", prefix: "see also", suffix: "etc" } ]
+        - [{ id: "doe2001", locator: "5", label: "page" }]
       expect:
         - Doe, <i>Miscellaneous Writings</i>, 2001, p. 5; see also <i>ibid</i> etc.
         - <i>Ibid</i>.
