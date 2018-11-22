@@ -123,11 +123,11 @@ function getProcessor(styleStr, library, jurisdictionDirs = []) {
   return proc;
 };
 
-function produceSingle(engine, single) {
+function produceSingle(engine, single, format) {
   // engine.makeCitationCluster([single], 'html') is broken, but it's meant to be faster.
   // (it tries to access 'disambig of undefined'... not helpful)
   // (node_modules/citeproc/citeproc_commonjs.js +10874)
-  let out = produceSequence(engine, [{ cluster: [single]}])
+  let out = produceSequence(engine, [{ cluster: [single]}], format || 'html')
   return out[0];
 }
 
@@ -139,9 +139,9 @@ function _atIndex(c, i) {
   }
 }
 
-function produceSequence(engine, clusters) {
+function produceSequence(engine, clusters, format) {
   let citations = clusters.map((c, i) => _atIndex(c, i+1))
-  let out = engine.rebuildProcessorState(citations, 'html')
+  let out = engine.rebuildProcessorState(citations, format || 'html')
   return out.map(o => o[2]);
 }
 
@@ -204,6 +204,45 @@ function expandGlobs(gs) {
   });
 }
 
+function insertMissingPageLabels(test) {
+  let immut = (single) => {
+    return (single.locator && !single.label) 
+      ? { ... single, label: single.label || 'page' }
+      : single;
+  };
+  if (test.single && test.single.locator && !test.single.label) {
+    return { ...test, single: immut(test.single) };
+  }
+  if (test.sequence) {
+    return {
+      ...test,
+      sequence: test.sequence.map(s => ({
+        ...s,
+        cluster: s.cluster.map(immut)
+      }))
+    }
+  }
+  return test;
+}
+
+
+function stripWhitespace(test) {
+  let expect = '';
+  if (Array.isArray(test.expect)) {
+    expect = test.expect.map(e => e.trim());
+  } else {
+    expect = test.expect && test.expect.trim();
+  }
+  return {
+    ...test,
+    expect: test.expect && expect
+  }
+}
+
+function normalizeItalics(testString) {
+  return testString.replace(new RegExp("</i>(\\s*)<i>"), "$1")
+}
+
 function readInputFiles(args) {
   let style = fs.readFileSync(args.csl, 'utf8');
   if (!style) {
@@ -234,6 +273,12 @@ function readInputFiles(args) {
     let nxtUnits = yaml.safeLoad(unitsStr);
     units = mergeUnits(units, nxtUnits);
   }
+  units = units.map(unit => {
+    return {
+      ...unit,
+      tests: unit.tests.map(stripWhitespace).map(insertMissingPageLabels)
+    }
+  });
 
   let jurisdictionDirs = expandGlobs(args.jurisdictionDirs);
 
@@ -248,5 +293,7 @@ module.exports = {
   produceSequence,
   ensureCachedRepos,
   readInputFiles,
+  normalizeItalics,
+  insertMissingPageLabels,
 }
 

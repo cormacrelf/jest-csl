@@ -1,8 +1,31 @@
-const { getProcessor, getLibrary, jestRunner, mergeUnits } = require('../src/lib');
+const { getProcessor, getLibrary, jestRunner, mergeUnits, normalizeItalics, insertMissingPageLabels } = require('../src/lib');
 
 let unit = (name, tests) => ({ describe: name, tests: tests });
 let testSingle   = (name, single, expect) => ({ it: name, single, expect });
 let testSequence = (name, tests) => ({ it: name, tests: tests });
+
+describe('normalizeItalics', () => {
+  it('should work', () => {
+    expect(normalizeItalics("</i><i>")).toBe("");
+    expect(normalizeItalics("</i> <i>")).toBe(" ");
+    expect(normalizeItalics("<i>yeah</i> <i>nah</i>")).toBe("<i>yeah nah</i>");
+    let unchanged = "<i>yeah</i>boi<i>nah</i>";
+    expect(normalizeItalics(unchanged)).toBe(unchanged);
+  })
+});
+
+describe('insertMissingPageLabels', () => {
+  it('should work', () => {
+    expect(insertMissingPageLabels({ single: {locator: "5", label: "section"} }))
+      .toMatchObject({ single: {locator: "5", label: "section"} })
+    expect(insertMissingPageLabels({ single: {locator: "5"} }))
+      .toMatchObject({ single: {locator: "5", label: "page"} })
+    expect(insertMissingPageLabels({ sequence: [{cluster: [{locator: "5", label: "section"}]}] }))
+      .toMatchObject({ sequence: [{cluster: [{locator: "5", label: "page", label: "section"}]}] });
+    expect(insertMissingPageLabels({ sequence: [{cluster: [{locator: "5"}]}] }))
+      .toMatchObject({ sequence: [{cluster: [{locator: "5", label: "page"}]}] });
+  })
+})
 
 describe('mergeUnits', () => {
   it('should merge(a, a) == a', () => {

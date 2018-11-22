@@ -1,4 +1,4 @@
-const { getProcessor, produceSingle, produceSequence, readInputFiles } = require('./lib');
+const { getProcessor, produceSingle, produceSequence, readInputFiles, normalizeItalics } = require('./lib');
 
 // This generates a JS array of each of the test units, with each test
 // transformed to include `result` and whether it `passed`. This is useful for
@@ -13,6 +13,7 @@ const { getProcessor, produceSingle, produceSequence, readInputFiles } = require
 function cslTestResults(args) {
   let { style, library, units, jurisdictionDirs } = readInputFiles(args);
   let engine = getProcessor(style, library, jurisdictionDirs);
+  // console.log(engine.locale['en-GB'].terms.page);
   return {
     engine: engine,
     results: rawProcessUnits(engine, units)
@@ -22,19 +23,28 @@ function cslTestResults(args) {
 function rawProcessUnits(engine, units) {
   let results = [];
   units.forEach((unit) => {
+    let _tests = [];
     if (unit.tests) {
       unit.tests.forEach(test => {
         // TODO: handle skipped tests
-        if (test.single && test.expect) {
-          let res = produceSingle(engine, test.single);
-          results.push({ ...test, result: res, passed: res === test.expect });
-        }
-        if (test.sequence && test.expect) {
-          let res = produceSequence(engine, test.sequence);
-          results.push({ ...test, result: res, passed: sequenceMatches(test.expect, res) });
+        if (test.mode === 'skip') {
+          // do nothing
+        } else if (test.mode === 'doc') {
+          _tests.push({ ...test, type: 'doc', passed: false })
+        } else if (!test.expect) {
+          _tests.push({ ...test, type: 'stub', passed: false })
+        } else if (test.single && test.expect) {
+          let res = produceSingle(engine, test.single, test.format);
+
+          _tests.push({ ...test, type: 'single', result: res, passed: normalizeItalics(res) === normalizeItalics(test.expect) });
+        } else if (test.sequence && test.expect) {
+          let res = produceSequence(engine, test.sequence, test.format);
+          _tests.push({ ...test, type: 'sequence', result: res, passed: sequenceMatches(test.expect, res) });
         }
       })
     }
+    let _u = { ...unit, tests: _tests };
+    results.push(_u);
   });
   return results;
 }
@@ -42,7 +52,7 @@ function rawProcessUnits(engine, units) {
 function sequenceMatches(expected, actual) {
   if (expected.length !== actual.length) return false;
   for (let i = 0; i < expected.length; i++) {
-    if (expected[i] !== actual[i]) return false;
+    if (normalizeItalics(expected[i]) !== normalizeItalics(actual[i])) return false;
   }
   return true;
 }

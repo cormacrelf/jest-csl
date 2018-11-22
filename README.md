@@ -101,10 +101,8 @@ module.exports = {
   suites: ["./test/STYLE.spec.yaml"]
 };
 
-if (typeof jest !== 'undefined') {
-  const { jestCSL } = require('jest-csl');
-  jestCSL(module.exports);
-}
+const { jestCSL } = require('jest-csl');
+jestCSL(module.exports);
 ```
 
 #### `jest.config.js`
