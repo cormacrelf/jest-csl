@@ -18,4 +18,4 @@ cache:
     - ~/.yarn
 script:
   - yarn
-  - yarn test
+  - yarn test --verbose
