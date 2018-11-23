@@ -1,4 +1,5 @@
 const { TestEngine, readTestUnits, normalizeItalics } = require('./lib');
+const log = require('loglevel');
 
 // these functions are to be run from within the jest context
 // (ie with describe() and friends globally defined already.)
@@ -13,6 +14,7 @@ function jestCSL(args) {
   if (typeof jest === 'undefined') {
     return;
   }
+  log.setLevel('silent');
   let units = readTestUnits(args.suites);
   let engine = new TestEngine(args);
 

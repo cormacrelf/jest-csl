@@ -1,4 +1,5 @@
 const CSL = require("citeproc");
+const log = require('loglevel');
 
 module.exports = {
   normalizeKey,
@@ -28,13 +29,17 @@ function lookupKey(key) {
 
 function makeGetAbbreviation(myAbbreviations, gotAbbreviationCache) {
   return function getAbbreviation(listname, obj, jurisdiction, category, key) {
+    let logger = log.getLogger('getAbbreviation');
     let abbreviations = myAbbreviations();
     // category === 'hereinafter' && console.log(listname, abbreviations, jurisdiction, category, key);
     gotAbbreviationCache(obj);
     abbreviationCategories = {};
     for(let juris in abbreviations) {
       for(let cat in abbreviations[juris]) {
-        abbreviationCategories[cat] = true;
+        if (Object.keys(abbreviations[juris][cat]).length > 0) {
+          // console.log('abbreviationCategories['+cat+'] = true;')
+          abbreviationCategories[cat] = true;
+        }
       }
     }
 
@@ -134,7 +139,7 @@ function makeGetAbbreviation(myAbbreviations, gotAbbreviationCache) {
 
     if(!abbreviation) abbreviation = key; //this should never happen, but just in case
 
-    // console.log("Abbreviated "+key+" as "+abbreviation);
+    logger.info("Abbreviated "+key+" as "+abbreviation);
 
     // Add to jurisdiction object
     if(!obj[jurisdiction]) {

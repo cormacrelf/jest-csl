@@ -3,6 +3,7 @@ Array.prototype.flatMap = function(lambda) {
 };
 
 const CSL = require("citeproc");
+const log = require('loglevel');
 const path = require('path');
 const os = require('os');
 const osenv = require('osenv');
@@ -19,6 +20,7 @@ const { normalizeKey, lookupKey, makeGetAbbreviation } = require('./getAbbreviat
 
 function cloneOrPull(url, repoDir, branch, shouldPull) {
   let repo;
+  let logger = log.getLogger('ensureCachedRepos');
   return git.Repository.open(repoDir)
     .then(r => { repo = r; })
     .then(() => {
@@ -26,17 +28,13 @@ function cloneOrPull(url, repoDir, branch, shouldPull) {
         return Promise.resolve()
         .then(() => repo.fetchAll())
         .then(() => repo.mergeBranches(branch, 'origin/' + branch))
+        .then(() => logger.info(`pulled repo ${repoDir}`))
       }
     })
     .catch((e) => {
-      console.log('error opening repository '+repoDir+'. starting from scratch:', e);
+      log.info(`repo ${repoDir} not cached; fetching`)
       return fse.remove(repoDir)
         .then(() => git.Clone(url, repoDir));
-    })
-    .then(() => {
-      if (shouldPull) {
-        console.log("Updated", repoDir);
-      }
     })
 }
 
@@ -58,7 +56,8 @@ function ensureCachedRepos(shouldPull) {
 
 const citeprocSys = (citations, jurisdictionDirs, myAbbreviations, gotAbbreviationCache) => ({
   retrieveLocale: function (lang) {
-    // console.log('language:', lang);
+    let ctx = log.getLogger('sys')
+    ctx.debug('retrieving locale: %s', lang);
     let p = path.join(_cacheLoc('locales'), 'locales-'+lang+'.xml');
     let locale = fs.readFileSync(p, 'utf8')
     return locale;
@@ -71,15 +70,20 @@ const citeprocSys = (citations, jurisdictionDirs, myAbbreviations, gotAbbreviati
   getAbbreviation: makeGetAbbreviation(myAbbreviations, gotAbbreviationCache),
 
   retrieveStyleModule(jurisdiction, preference) {
+    let cp = log.getLogger('sys')
+    let jp = jurisdiction + (preference ? '-' + preference : '')
+    cp.debug(`retrieving style module: ${jp}`);
+    let ctx = log.getLogger(`sys > retrieve ${jp}`)
+
     jurisdiction = jurisdiction.replace(/\:/g, "+");
     var id = preference
       ? "juris-" + jurisdiction + "-" + preference + ".csl"
       : "juris-" + jurisdiction + ".csl";
     let shouldLog = false;
     let tryFile = (x) => {
-      if (shouldLog) console.log('searching', x);
+      ctx.trace(`searching ${x}`)
       let t = fs.readFileSync(x, 'utf8')
-      if (t && shouldLog) console.log('found', x)
+      if (t) ctx.trace(`found ${x}`)
       return t;
     }
     jurisdictionDirs.push(_cacheLoc('style-modules'));
@@ -159,7 +163,7 @@ function mergeUnits(unitsA, unitsB) {
 }
 
 function _bail(msg) {
-  console.error(msg);
+  log.error(msg);
   process.exit(1);
 }
 
@@ -265,6 +269,8 @@ function readTestUnits(suites) {
 
 class TestEngine {
   constructor(args) {
+    this.logger = args.logger || log.getLogger('TestEngine');
+
     let { style, library, jurisdictionDirs } = readConfigFiles(args);
     let [citations, itemIDs] = readLibrary(library);
 
@@ -280,6 +286,7 @@ class TestEngine {
 
     this.engine = new CSL.Engine(sys, style);
     this.engine.updateItems(itemIDs);
+
   }
 
   retrieveItem(item) {
@@ -291,6 +298,7 @@ class TestEngine {
       default: new CSL.AbbreviationSegments()
     };
     if (this.sysAbbreviationCache) {
+      this.logger.trace("clearing sysAbbreviationCache");
       Object.keys(this.sysAbbreviationCache).forEach(k => delete this.sysAbbreviationCache[k]);
       this.sysAbbreviationCache['default'] = new CSL.AbbreviationSegments();
     }
@@ -323,10 +331,10 @@ class TestEngine {
   }
 
   addAbbreviation(jurisdiction, category, key, value) {
+    this.logger.info(`adding abbreviation: ${jurisdiction}.${category}["${key}"] = "${value}"`);
     this.abbreviations[jurisdiction] = this.abbreviations[jurisdiction] || new CSL.AbbreviationSegments();
     let k = lookupKey(normalizeKey(key));
     this.abbreviations[jurisdiction][category][k] = value;
-    // console.log('added:', key, '->', value);
   }
 }
 
