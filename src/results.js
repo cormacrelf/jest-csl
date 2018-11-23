@@ -20,6 +20,21 @@ function cslTestResults(args) {
   };
 }
 
+function stripItems(test) {
+  let onlyRequiredProperties = citeItem => {
+    const { id, locator, label, prefix, suffix } = citeItem;
+    return { id, locator, label, prefix, suffix };
+  }
+
+  if (test.single) {
+    return { ...test, single: onlyRequiredProperties(test.single) }
+  }
+  if (test.sequence) {
+    return { ...test, sequence: test.sequence.map(cluster => cluster.map(onlyRequiredProperties)) }
+  }
+  return test;
+}
+
 function rawProcessUnits(engine, units) {
   let results = [];
   units.forEach((unit) => {
@@ -35,10 +50,11 @@ function rawProcessUnits(engine, units) {
           _tests.push({ ...test, type: 'stub', passed: false })
         } else if (test.single && test.expect) {
           let res = engine.produceSingle(test.single, test.format, test.abbreviations);
-
+          test = stripItems(test);
           _tests.push({ ...test, type: 'single', result: res, passed: normalizeItalics(res) === normalizeItalics(test.expect) });
         } else if (test.sequence && test.expect) {
           let res = engine.produceSequence(test.sequence, test.format, test.abbreviations);
+          test = stripItems(test);
           _tests.push({ ...test, type: 'sequence', result: res, passed: sequenceMatches(test.expect, res) });
         }
       })
