@@ -38,45 +38,25 @@ program.command('results <configurations...>')
 
 program.parse(process.argv);
 
-function getIds(clusters) {
-  return Array.prototype.flatMap.call(clusters, cluster => {
-    return cluster.map(cite => cite.id);
-  });
-}
-
 async function runConfiguration(configPath, { includeLibrary, verbose }) {
   let pwd = path.resolve(".");
   let module = path.join(pwd, configPath).replace(/\.js$/, '');
   let config = require(module);
   let outputPath = config.output;
-  let { results, engine } = cslTestResults(config);
+  let { engine, library, citeIds, units } = cslTestResults(config);
 
   let cpath = chalk.white(configPath + ":");
-  let output = { units: results };
 
   if (verbose) {
     let count = 0;
-    results.forEach(unit => count += unit.tests && unit.tests.length);
-    console.log(cpath, 'processed ' + results.length + ' test units,', count, 'test cases');
+    units.forEach(unit => count += unit.tests && unit.tests.length);
+    console.log(cpath, 'processed ' + units.length + ' test units,', count, 'test cases');
+    console.log(cpath, 'test used items ' + chalk.blue(citeIds.join(' ')))
   }
 
+  let output = { units };
+
   if (includeLibrary) {
-    if (verbose) console.log(cpath, 'assembling library')
-    let citeIds = new Set();
-    results.forEach(unit => {
-      unit.tests && unit.tests.forEach((test) => {
-        if (test.single && test.single.id) {
-          citeIds.add(test.single.id);
-        } else if (test.sequence) {
-          getIds(test.sequence).forEach(id => id && citeIds.add(id));
-        }
-      });
-    });
-    if (verbose) console.log(cpath, 'test used items ' + chalk.blue([...citeIds].join(' ')))
-    let library = {};
-    [...citeIds].forEach(id => {
-      library[id] = engine.retrieveItem(id);
-    });
     output.library = library;
   }
 

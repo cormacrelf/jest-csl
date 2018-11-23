@@ -13,11 +13,10 @@ const { TestEngine, readTestUnits, normalizeItalics } = require('./lib');
 function cslTestResults(args) {
   let units = readTestUnits(args.suites);
   let engine = new TestEngine(args);
-  // console.log(engine.locale['en-GB'].terms.page);
-  return {
-    engine: engine,
-    results: rawProcessUnits(engine, units)
-  };
+  let citeIds = getCiteIds(units);
+  let library = getLibraryInUse(engine, citeIds);
+  units = rawProcessUnits(engine, units);
+  return { engine, library, citeIds, units };
 }
 
 function stripItems(test) {
@@ -33,6 +32,34 @@ function stripItems(test) {
     return { ...test, sequence: test.sequence.map(cluster => cluster.map(onlyRequiredProperties)) }
   }
   return test;
+}
+
+function getIds(clusters) {
+  return Array.prototype.flatMap.call(clusters, cluster => {
+    return cluster.map(cite => cite.id);
+  });
+}
+
+function getCiteIds(units) {
+  let citeIds = new Set();
+  units.forEach(unit => {
+    unit.tests && unit.tests.forEach(test => {
+      if (test.single && test.single.id) {
+        citeIds.add(test.single.id);
+      } else if (test.sequence) {
+        getIds(test.sequence).forEach(id => id && citeIds.add(id));
+      }
+    });
+  });
+  return [...citeIds];
+}
+
+function getLibraryInUse(engine, citeIds) {
+  let library = {};
+  citeIds.forEach(id => {
+    library[id] = engine.retrieveItem(id);
+  });
+  return library;
 }
 
 function rawProcessUnits(engine, units) {

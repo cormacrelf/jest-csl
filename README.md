@@ -274,34 +274,76 @@ list.
 
 ### Running your tests
 
-    yarn test
+```sh
+yarn test
+```
 
 Follow the onscreen instructions to interact with the Jest environment (or 
 quit).
 
 ### Updating the cache
 
-    yarn jest-csl update
+```sh
+yarn jest-csl update
+```
 
 This will attempt to update your cached locales and style-modules.
 
-### Collecting test results
+### Collecting test results with the CLI
 
 Before, you defined a test configuration that would export a plain-object 
 description of itself if it wasn't running in Jest. You can use that now.
 
+1. Define an `output` key on the configuration object, with a string path to a 
+   JSON file to be written.
+2. Run `jest-csl results` on your configuration.
+
+```javascript
+// ./test/my-configuration.test.js
+module.exports = {
+    ...,
+    output: './results.json'
+}
+```
+
+```sh
+yarn jest-csl results --includeLibrary ./test/my-configuration.test.js
+jq . results.json
+```
+```json
+{
+    "library": {
+        "citekey": { ... },
+        ...
+    },
+    "units": [
+        {
+            "describe": "...",
+            "tests": [...]
+        }
+    ]
+}
+```
+
+Each non-stub test object has a `result` key added of the same shape as
+`expect`, and a `type` indicating what kind of test it was (`doc` for
+documentation only (i.e. it had a 'meta' key but no actual test), `stub` if there was
+no expected output defined, `single` and `sequence`).
+
+### Collecting test results via JavaScript
+
 ```javascript
 const { cslTestResults } = require('jest-csl');
 const config = require('./test/my-configuration.test');
-let { results, engine } = cslTestResults(config);
-console.log(results);
+let { engine, units, library, citeIds } = cslTestResults(config);
+console.log(units);
 ```
 
-This generates a JS array of each of the test units, with each test
-transformed to include `result` and whether it `passed`. This is useful for
-generating documentation or making a custom view of the results, a bit like
-a jest reporter but without losing the test case information and metadata.
+This generates a JS array of each of the test units, with each test transformed
+as described in the CLI. This is useful for generating documentation or making
+a custom view of the results, a bit like a jest reporter but without losing the
+test case information and metadata.
 
-`engine` is a `citeproc-js` Engine pre-loaded with your libraries.
+`engine` is a wrapper around CSL.Engine pre-loaded with your libraries.
 `engine.retrieveItem('citeKey')` may be useful to you.
 
