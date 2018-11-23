@@ -1,0 +1,42 @@
+[
+    {
+        "author": [
+            {
+                "family": "Doe", 
+                "given": "John"
+            }
+        ], 
+        "id": "ITEM-1", 
+        "type": "book"
+    }, 
+    {
+        "author": [
+            {
+                "family": "Roe", 
+                "given": "Jane"
+            }
+        ], 
+        "id": "ITEM-2", 
+        "type": "book"
+    }, 
+    {
+        "author": [
+            {
+                "family": "Noakes", 
+                "given": "John"
+            }
+        ], 
+        "id": "ITEM-3", 
+        "type": "book"
+    }, 
+    {
+        "author": [
+            {
+                "family": "Snoakes", 
+                "given": "Richard"
+            }
+        ], 
+        "id": "ITEM-4", 
+        "type": "book"
+    }
+]
