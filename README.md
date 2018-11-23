@@ -1,7 +1,7 @@
 # `jest-csl`
 
-![npm](https://img.shields.io/npm/v/jest-csl.svg)
-![build](https://img.shields.io/travis/com/cormacrelf/jest-csl.svg)
+[![npm](https://img.shields.io/npm/v/jest-csl.svg)](https://npmjs.com/package/jest-csl)
+[![build](https://img.shields.io/travis/com/cormacrelf/jest-csl.svg)](https://travis-ci.com/cormacrelf/jest-csl)
 
 This is a library to make testing [Citation Style Language][csl] definitions 
 easier using [`Jest`][jest]. It includes:
@@ -327,8 +327,8 @@ jq . results.json
 
 Each non-stub test object has a `result` key added of the same shape as
 `expect`, and a `type` indicating what kind of test it was (`doc` for
-documentation only (i.e. it had a 'meta' key but no actual test), `stub` if there was
-no expected output defined, `single` and `sequence`).
+documentation only (i.e. it had a 'meta' key but no actual test), `stub` if
+there was no expected output defined, `single` and `sequence`).
 
 ### Collecting test results via JavaScript
 
