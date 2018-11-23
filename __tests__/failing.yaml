@@ -1,0 +1,10 @@
+- describe: "programmatic test unit"
+  tests:
+    - it: 'should fail a single test'
+      single: { "id": "ITEM-1" }
+      expect: "(DoeNOT)"
+    - it: 'should fail a sequence'
+      sequence:
+        - [{ "id": "ITEM-1" }]
+      expect:
+        - "(DoeNOT)"

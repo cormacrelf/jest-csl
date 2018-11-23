@@ -3,16 +3,17 @@ const config = require('./integration.test');
 
 jestCSL(config);
 
-describe("programmatic", () => {
+const { jestTestCase } = require('../src/jest');
+const engine = new TestEngine(config);
+const failing = readTestUnits(['./__tests__/failing.yaml']);
+
+describe("programmatic test unit", () => {
   it("should fail a test", () => {
-    const { jestTestCase } = require('../src/jest');
-    const units = readTestUnits(config.suites);
-    const engine = new TestEngine(config);
-    const failingTest = {
-      it: "should fail",
-      single: { id: "ITEM-1" },
-      expect: "(DoeNOT)"
-    }
+    const failingTest = failing[0].tests.find(t => t.it === 'should fail a single test');
+    expect(() => jestTestCase(engine, failingTest)).toThrowErrorMatchingSnapshot();
+  });
+  it("should fail a sequence", () => {
+    const failingTest = failing[0].tests.find(t => t.it === 'should fail a sequence');
     expect(() => jestTestCase(engine, failingTest)).toThrowErrorMatchingSnapshot();
   });
 })
