@@ -7,6 +7,3 @@ module.exports = {
   output: "./results-ibid.json"
 }
 
-const { jestCSL } = require('../index');
-jestCSL(module.exports);
-

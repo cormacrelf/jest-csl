@@ -50,5 +50,6 @@ function jestTestCase(engine, test) {
 }
 
 module.exports = {
-  jestCSL
+  jestCSL,
+  jestTestCase,
 }
