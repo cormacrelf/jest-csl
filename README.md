@@ -218,7 +218,7 @@ when you are building a style from the ground up and can't write full-item tests
 </macro>
 <citation ...>
   <layout prefix="(" suffix=")" delimiter="; " ...>
-    <text value="lots of messy code"
+    <text value="lots of messy code" />
     <choose>
       ...
     </choose>
