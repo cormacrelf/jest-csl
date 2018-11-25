@@ -363,10 +363,19 @@ jq . results.json
 }
 ```
 
-Each non-stub test object has a `result` key added of the same shape as
-`expect`, and a `type` indicating what kind of test it was (`doc` for
-documentation only (i.e. it had a 'meta' key but no actual test), `stub` if
-there was no expected output defined, `single` and `sequence`).
+Each test object has these keys added:
+
+* `type` indicating what kind of test it was:
+    * `single`
+    * `sequence`
+    * `doc` for documentation only (i.e. it had a doc key but no actual test)
+    * `stub` otherwise
+* `result` key of the same shape as `expect` (only if the test had an `expect`)
+
+#### Test Metadata
+
+Two keys, `doc` and `meta`, are recognised as metadata on both `describe` units
+and test cases. They may have any content, and will be included in the output.
 
 ### Collecting test results via JavaScript
 

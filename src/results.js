@@ -69,21 +69,30 @@ function rawProcessUnits(engine, units) {
     let _tests = [];
     if (unit.tests) {
       unit.tests.forEach(test => {
-        // TODO: handle skipped tests
         if (test.mode === 'skip') {
           // do nothing
-        } else if (test.mode === 'doc') {
-          _tests.push({ ...test, type: 'doc', passed: false })
-        } else if (!test.expect) {
-          _tests.push({ ...test, type: 'stub', passed: false })
         } else if (test.single && test.expect) {
           let res = engine.processTestCase(test);
           test = stripItems(test);
-          _tests.push({ ...test, type: 'single', result: res, passed: normalizeItalics(res) === normalizeItalics(test.expect) });
+          _tests.push({
+            ...test,
+            type: 'single',
+            result: res,
+            passed: normalizeItalics(res) === normalizeItalics(test.expect)
+          });
         } else if (test.sequence && test.expect) {
           let res = engine.processTestCase(test);
           test = stripItems(test);
-          _tests.push({ ...test, type: 'sequence', result: res, passed: sequenceMatches(test.expect, res) });
+          _tests.push({
+            ...test,
+            type: 'sequence',
+            result: res,
+            passed: sequenceMatches(test.expect, res)
+          });
+        } else if (test.doc) {
+          _tests.push({ ...test, type: 'doc', passed: false })
+        } else {
+          _tests.push({ ...test, type: 'stub', passed: false })
         }
       })
     }

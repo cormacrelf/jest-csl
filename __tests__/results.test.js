@@ -2,7 +2,7 @@ const { cslTestResults } = require('../index');
 let config = require('./integration.test');
 
 describe("results object", () => {
-  let { engine, library, citeIds, units } = cslTestResults(config);
+  let { library, citeIds, units } = cslTestResults(config);
   it("includes an item used in the test", () => {
     expect(citeIds).toContain('ITEM-1');
     expect(library).not.toBeNull();
@@ -17,5 +17,11 @@ describe("results object", () => {
     expect(t.passed).toBe(true);
     expect(t.result).toMatchObject(t.expect);
   });
+
+  it("includes meta and doc on a unit", () => {
+    let u = units[0];
+    expect(u.meta).toMatchObject({included: true});
+    expect(u.doc).toBe("some docs");
+  })
 });
 

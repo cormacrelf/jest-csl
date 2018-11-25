@@ -1,4 +1,6 @@
 - describe: "yaml test unit"
+  meta: { included: true }
+  doc: "some docs"
   tests:
     - it: 'should pass'
       sequence:
