@@ -13,3 +13,17 @@
 
     - it: 'should skip'
       mode: skip
+
+- describe: "macro flag"
+  tests:
+    - it: "should only render macro contents for single test, with no layout affixes"
+      macro: "AMacro"
+      single: { id: "ITEM-1", locator: "a-locator" }
+      expect: "a-locator"
+    - it: "should retain layout's delimiter"
+      macro: "AMacro"
+      sequence:
+        - [ { id: "ITEM-1", locator: "a-locator" }
+          , { id: "ITEM-1", locator: "second-locator" } ]
+      expect:
+        - "a-locator; second-locator"

@@ -8,6 +8,9 @@
     <title />
     <updated>2009-08-10T04:49:00+09:00</updated>
   </info>
+  <macro name="AMacro">
+    <text variable="locator" />
+  </macro>
   <citation>
     <layout delimiter="; " prefix="(" suffix=")">
       <choose>

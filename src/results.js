@@ -77,11 +77,11 @@ function rawProcessUnits(engine, units) {
         } else if (!test.expect) {
           _tests.push({ ...test, type: 'stub', passed: false })
         } else if (test.single && test.expect) {
-          let res = engine.produceSingle(test.single, test.format, test.abbreviations);
+          let res = engine.processTestCase(test);
           test = stripItems(test);
           _tests.push({ ...test, type: 'single', result: res, passed: normalizeItalics(res) === normalizeItalics(test.expect) });
         } else if (test.sequence && test.expect) {
-          let res = engine.produceSequence(test.sequence, test.format, test.abbreviations);
+          let res = engine.processTestCase(test);
           test = stripItems(test);
           _tests.push({ ...test, type: 'sequence', result: res, passed: sequenceMatches(test.expect, res) });
         }

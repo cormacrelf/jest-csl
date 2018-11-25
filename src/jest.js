@@ -44,10 +44,16 @@ function jestCSL(args) {
 
 function jestTestCase(engine, test) {
   if (test.single && test.expect) {
-    let out = engine.produceSingle(test.single, test.format, test.abbreviations);
+    if (typeof test.expect !== "string") {
+      throw new Error("single test.expect must be a string");
+    }
+    let out = engine.processTestCase(test);
     expect(normalizeItalics(out)).toBe(normalizeItalics(test.expect));
   } else if (test.sequence && test.expect) {
-    let out = engine.produceSequence(test.sequence, test.format, test.abbreviations);
+    if (!Array.isArray(test.expect)) {
+      throw new Error("sequence test.expect must be an array of strings");
+    }
+    let out = engine.processTestCase(test);
     expect(out.map(normalizeItalics)).toMatchObject(test.expect.map(normalizeItalics));
   }
 }

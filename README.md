@@ -159,6 +159,10 @@ example:
         <i>John's Diary</i> 124.
 ```
 
+#### Basic single-item tests
+
+#### Clusters and Sequences
+
 For more complex combined citations, use 'sequence' to test the
 in-texts/footnotes generated for a sequence of clusters of cites.
 
@@ -170,13 +174,15 @@ in-texts/footnotes generated for a sequence of clusters of cites.
   tests:
     - it: "should render plain ibids for the same locator"
       sequence:
-        - [ { id: "doe2001", locator: "5", label: "page" },
-            { id: "doe2001", locator: "5", label: "page", prefix: "see also", suffix: "etc" } ]
+        - [ { id: "doe2001", locator: "5", label: "page" }
+          , { id: "doe2001", locator: "5", label: "page", prefix: "see also", suffix: "etc" } ]
         - [{ id: "doe2001", locator: "5", label: "page" }]
       expect:
         - Doe, <i>Miscellaneous Writings</i>, 2001, p. 5; see also <i>ibid</i> etc.
         - <i>Ibid</i>.
 ```
+
+#### Abbreviations
 
 To test the abbreviations found in the Abbreviation Filter:
 
@@ -196,6 +202,36 @@ To test the abbreviations found in the Abbreviation Filter:
 See this command's output for a list of allowed categories.
 
     node -e 'var c=require('citeproc');console.log(Object.keys(new c.AbbreviationSegments()))'
+
+#### Unit-Testing Specific Macros
+
+You can add `macro: MacroName` to a test, and for that test only, your style's
+`<layout>` tag will have its contents replaced with `<text macro="MacroName"
+/>`, and any prefix and suffix is stripped (delimiter is kept). This is convenient
+when you are building a style from the ground up and can't write full-item tests yet.
+
+```xml
+<macro name="MacroName">
+  <text variable="locator" />
+</macro>
+<citation ...>
+  <layout prefix="(" suffix=")" delimiter="; " ...>
+    <text value="lots of messy code"
+    <choose>
+      ...
+    </choose>
+  </layout>
+</citation>
+```
+
+```yaml
+- describe: "MacroName only"
+  tests:
+    - it: "should render a locator"
+      macro: MacroName
+      single: { id: "citekey", locator: "a-locator" }
+      expect: "a-locator"
+```
 
 ### Combining test suites
 

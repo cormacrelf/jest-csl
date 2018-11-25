@@ -1,33 +1,82 @@
 const CSL = require("citeproc");
+const { produce } = require('immer');
 const log = require("loglevel")
 const { readConfigFiles, readLibrary } = require('./lib');
 const { makeSys } = require('./sys');
 const { normalizeKey, lookupKey } = require('./getAbbreviation');
 
+function findCitationNode(styleJSON) {
+  return styleJSON.children.find(node => {
+    return node.name === 'citation';
+  });
+}
+
+function findLayoutNode(styleJSON) {
+  let citation = findCitationNode(styleJSON);
+  return citation && citation.children.find(node => {
+    return node.name === 'layout';
+  });
+}
+
+function replaceLayoutWithMacro(styleJson, macroName) {
+  return produce(styleJson, (draft) => {
+    let layout = findLayoutNode(draft);
+    if (!layout) { return null }
+    let invoke = { name: 'text', attrs: { macro: macroName }, children: [""] };
+    layout.attrs.prefix = "";
+    layout.attrs.suffix = "";
+    layout.children = [invoke];
+  });
+}
+
 class TestEngine {
   constructor(args) {
     this.logger = args.logger || log.getLogger('TestEngine');
 
-    let { style, library, jurisdictionDirs } = readConfigFiles(args);
+    let {
+      style: styleStr,
+      library,
+      jurisdictionDirs
+    } = readConfigFiles(args);
     let { citations, itemIDs } = readLibrary(library);
+    this.itemIDs = itemIDs;
+
+    // parse it so we can manipulate it
+    this.style = CSL.parseXml(styleStr);
 
     this.abbreviations = {};
     this.sysAbbreviationCache = null;
 
-    const sys = makeSys(
+    this.sys = makeSys(
       citations,
       jurisdictionDirs,
       () => this.abbreviations,
       cache => { this.sysAbbreviationCache = cache; }
     );
 
-    this.engine = new CSL.Engine(sys, style);
-    this.engine.updateItems(itemIDs);
+    this.defaultEngine = new CSL.Engine(this.sys, this.style);
+    this.defaultEngine.updateItems(itemIDs);
 
+    this.macroCache = {};
+  }
+
+  getEngine(testCase) {
+    let engine = this.defaultEngine;
+    if (typeof testCase.macro === 'string' && testCase.macro !== "") {
+      const { macro } = testCase;
+      if (this.macroCache[macro]) {
+        return this.macroCache[macro];
+      }
+      const miniStyle = replaceLayoutWithMacro(this.style, testCase.macro);
+      engine = new CSL.Engine(this.sys, miniStyle);
+      engine.updateItems(this.itemIDs);
+      this.macroCache[testCase] = engine;
+    }
+    return engine;
   }
 
   retrieveItem(item) {
-    return this.engine.retrieveItem(item);
+    return this.defaultEngine.retrieveItem(item);
   }
 
   setAbbreviations(sets) {
@@ -52,14 +101,6 @@ class TestEngine {
     })
   }
 
-  produceSingle(single, format, abbreviations) {
-    // engine.makeCitationCluster([single], 'html') is broken, but it's meant to be faster.
-    // (it tries to access 'disambig of undefined'... not helpful)
-    // (node_modules/citeproc/citeproc_commonjs.js +10874)
-    let out = this.produceSequence([[single]], format || 'html', abbreviations)
-    return out[0];
-  }
-
   _atIndex(c, i) {
     return {
       citationID: "CITATION-"+i,
@@ -68,10 +109,25 @@ class TestEngine {
     }
   }
 
-  produceSequence(clusters, format, abbreviations) {
+  processTestCase(testCase) {
+    let engine = this.getEngine(testCase);
+    let fmt = testCase.format || 'html';
+    if (testCase.single) {
+      // engine.makeCitationCluster([single], 'html') is broken, but it's meant to be faster.
+      // (it tries to access 'disambig of undefined'... not helpful)
+      // (node_modules/citeproc/citeproc_commonjs.js +10874)
+      let out = this.produceSequence(engine, [[testCase.single]], fmt, testCase.abbreviations);
+      return out[0];
+    }
+    if (testCase.sequence) {
+      return this.produceSequence(engine, testCase.sequence, fmt, testCase.abbreviations);
+    }
+  }
+
+  produceSequence(engine, clusters, format, abbreviations) {
     this.setAbbreviations(abbreviations);
     let citations = clusters.map((c, i) => this._atIndex(c, i+1))
-    let out = this.engine.rebuildProcessorState(citations, format || 'html')
+    let out = engine.rebuildProcessorState(citations, format || 'html')
     return out.map(o => o[2]);
   }
 
