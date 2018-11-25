@@ -13,7 +13,7 @@ easier using [`Jest`][jest]. It includes:
 * A schema for writing CSL specs in YAML
 * A simple function to execute one Jest test for each test in a spec, for a 
   particular CSL-JSON reference library, for a particular style
-* A function to to collect results for further processing (like turning it into 
+* A CLI and an API to to collect results for further processing (like turning it into 
   HTML).
 
 [csl]: https://citationstyles.org/
