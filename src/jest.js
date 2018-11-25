@@ -1,4 +1,5 @@
-const { TestEngine, readTestUnits, normalizeItalics } = require('./lib');
+const { readTestUnits, normalizeItalics } = require('./lib');
+const { TestEngine } = require('./TestEngine');
 const log = require('loglevel');
 
 // these functions are to be run from within the jest context

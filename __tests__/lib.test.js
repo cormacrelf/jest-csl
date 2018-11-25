@@ -1,14 +1,18 @@
-const { getProcessor, getLibrary, jestRunner, mergeUnits, normalizeItalics, insertMissingPageLabels } = require('../src/lib');
+const { mergeUnits, normalizeItalics, insertMissingPageLabels } = require('../src/lib');
 
 let unit = (name, tests) => ({ describe: name, tests: tests });
 let testSingle   = (name, single, expect) => ({ it: name, single, expect });
-let testSequence = (name, tests) => ({ it: name, tests: tests });
+// let testSequence = (name, tests) => ({ it: name, tests: tests });
 
 describe('normalizeItalics', () => {
-  it('should work', () => {
+  it('should collapse </i><i> to nothing', () => {
     expect(normalizeItalics("</i><i>")).toBe("");
+  })
+  it('should collapse two italics with only a space between', () => {
     expect(normalizeItalics("</i> <i>")).toBe(" ");
     expect(normalizeItalics("<i>yeah</i> <i>nah</i>")).toBe("<i>yeah nah</i>");
+  })
+  it('should not affect non-whitespace gaps', () => {
     let unchanged = "<i>yeah</i>boi<i>nah</i>";
     expect(normalizeItalics(unchanged)).toBe(unchanged);
   })

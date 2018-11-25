@@ -2,7 +2,6 @@ Array.prototype.flatMap = function(lambda) {
     return Array.prototype.concat.apply([], this.map(lambda)); 
 };
 
-const CSL = require("citeproc");
 const log = require('loglevel');
 const path = require('path');
 const os = require('os');
@@ -16,93 +15,39 @@ const fse = require('fs-extra');
 const mkdirp = require('mkdirp');
 const git = require('nodegit');
 
-const { normalizeKey, lookupKey, makeGetAbbreviation } = require('./getAbbreviation');
-
 function cloneOrPull(url, repoDir, branch, shouldPull) {
   let repo;
   let logger = log.getLogger('ensureCachedRepos');
   return git.Repository.open(repoDir)
     .then(r => { repo = r; })
-    .then(() => {
+    .then(async () => {
       if (shouldPull) {
-        return Promise.resolve()
-        .then(() => repo.fetchAll())
-        .then(() => repo.mergeBranches(branch, 'origin/' + branch))
-        .then(() => logger.info(`pulled repo ${repoDir}`))
+        await repo.fetchAll();
+        await repo.mergeBranches(branch, 'origin/' + branch);
+        logger.info(`pulled repo ${repoDir}`);
       }
     })
-    .catch((e) => {
+    .catch(async (e) => {
       log.info(`repo ${repoDir} not cached; fetching`)
-      return fse.remove(repoDir)
-        .then(() => git.Clone(url, repoDir));
+      await fse.remove(repoDir);
+      await git.Clone(url, repoDir);
     })
 }
 
 // returns a Promise
-function ensureCachedRepos(shouldPull) {
+async function ensureCachedRepos(shouldPull) {
   let cacheDir = getDefaultCacheDir();
   mkdirp(cacheDir);
-  return Promise.resolve()
-    .then(() => cloneOrPull("https://github.com/citation-style-language/locales",
-                            _cacheLoc('locales'),
-                            'master',
-                            shouldPull))
-    .then(() => cloneOrPull("https://github.com/Juris-M/style-modules",
-                            _cacheLoc('style-modules'),
-                            'master',
-                            shouldPull))
-  ;
+  let locales = cloneOrPull("https://github.com/citation-style-language/locales",
+    getCacheLoc('locales'),
+    'master',
+    shouldPull);
+  let styleModules = cloneOrPull("https://github.com/Juris-M/style-modules",
+      getCacheLoc('style-modules'),
+      'master',
+      shouldPull);
+  await Promise.all([locales, styleModules]);
 }
-
-const citeprocSys = (citations, jurisdictionDirs, myAbbreviations, gotAbbreviationCache) => ({
-  retrieveLocale: function (lang) {
-    let ctx = log.getLogger('sys')
-    ctx.debug('retrieving locale: %s', lang);
-    let p = path.join(_cacheLoc('locales'), 'locales-'+lang+'.xml');
-    let locale = fs.readFileSync(p, 'utf8')
-    return locale;
-  },
-
-  retrieveItem(id){
-    return citations[id];
-  },
-
-  getAbbreviation: makeGetAbbreviation(myAbbreviations, gotAbbreviationCache),
-
-  retrieveStyleModule(jurisdiction, preference) {
-    let cp = log.getLogger('sys')
-    let jp = jurisdiction + (preference ? '-' + preference : '')
-    cp.debug(`retrieving style module: ${jp}`);
-    let ctx = log.getLogger(`sys > retrieve ${jp}`)
-
-    jurisdiction = jurisdiction.replace(/\:/g, "+");
-    var id = preference
-      ? "juris-" + jurisdiction + "-" + preference + ".csl"
-      : "juris-" + jurisdiction + ".csl";
-    let shouldLog = false;
-    let tryFile = (x) => {
-      ctx.trace(`searching ${x}`)
-      let t = fs.readFileSync(x, 'utf8')
-      if (t) ctx.trace(`found ${x}`)
-      return t;
-    }
-    jurisdictionDirs.push(_cacheLoc('style-modules'));
-    let ord = jurisdictionDirs
-      .map(d => () => tryFile(path.join(d, id)));
-    let ret = false;
-    for (var i = 0; i < ord.length; i++) {
-      try {
-        ret = ord[i]();
-        if (ret) {
-          return ret;
-        };
-      } catch (e) {
-        continue;
-      }
-    }
-    return ret;
-  }
-});
 
 // @param library Array of CSL-JSON item objects.
 function readLibrary(library) {
@@ -114,15 +59,7 @@ function readLibrary(library) {
     citations[id] = item;
     itemIDs.add(id);
   }
-  return [citations, [...itemIDs]]
-}
-
-function _atIndex(c, i) {
-  return {
-    citationID: "CITATION-"+i,
-    properties: { noteIndex: i },
-    citationItems: c
-  }
+  return { citations, itemIDs: [...itemIDs] }
 }
 
 function _addTestsToMap(m, u) {
@@ -174,7 +111,7 @@ function getDefaultCacheDir() {
   return cacheDir;
 }
 
-function _cacheLoc(r) {
+function getCacheLoc(r) {
   return path.join(getDefaultCacheDir(), r);
 }
 
@@ -267,83 +204,14 @@ function readTestUnits(suites) {
   return units;
 }
 
-class TestEngine {
-  constructor(args) {
-    this.logger = args.logger || log.getLogger('TestEngine');
-
-    let { style, library, jurisdictionDirs } = readConfigFiles(args);
-    let [citations, itemIDs] = readLibrary(library);
-
-    this.abbreviations = {};
-    this.sysAbbreviationCache = null;
-
-    const sys = citeprocSys(
-      citations,
-      jurisdictionDirs,
-      () => this.abbreviations,
-      cache => { this.sysAbbreviationCache = cache; }
-    );
-
-    this.engine = new CSL.Engine(sys, style);
-    this.engine.updateItems(itemIDs);
-
-  }
-
-  retrieveItem(item) {
-    return this.engine.retrieveItem(item);
-  }
-
-  setAbbreviations(sets) {
-    this.abbreviations = {
-      default: new CSL.AbbreviationSegments()
-    };
-    if (this.sysAbbreviationCache) {
-      this.logger.trace("clearing sysAbbreviationCache");
-      Object.keys(this.sysAbbreviationCache).forEach(k => delete this.sysAbbreviationCache[k]);
-      this.sysAbbreviationCache['default'] = new CSL.AbbreviationSegments();
-    }
-    if (!sets) return;
-    sets.forEach(set => {
-      let jurisdiction = set.jurisdiction || 'default';
-      let categories = Object.keys(new CSL.AbbreviationSegments());
-      categories.forEach(cat => {
-        let kvs = set[cat] || {};
-        Object.entries(kvs).forEach(e => {
-          this.addAbbreviation(jurisdiction, cat, e[0], e[1]);
-        })
-      });
-    })
-  }
-
-  produceSingle(single, format, abbreviations) {
-    // engine.makeCitationCluster([single], 'html') is broken, but it's meant to be faster.
-    // (it tries to access 'disambig of undefined'... not helpful)
-    // (node_modules/citeproc/citeproc_commonjs.js +10874)
-    let out = this.produceSequence([[single]], format || 'html', abbreviations)
-    return out[0];
-  }
-
-  produceSequence(clusters, format, abbreviations) {
-    this.setAbbreviations(abbreviations);
-    let citations = clusters.map((c, i) => _atIndex(c, i+1))
-    let out = this.engine.rebuildProcessorState(citations, format || 'html')
-    return out.map(o => o[2]);
-  }
-
-  addAbbreviation(jurisdiction, category, key, value) {
-    this.logger.info(`adding abbreviation: ${jurisdiction}.${category}["${key}"] = "${value}"`);
-    this.abbreviations[jurisdiction] = this.abbreviations[jurisdiction] || new CSL.AbbreviationSegments();
-    let k = lookupKey(normalizeKey(key));
-    this.abbreviations[jurisdiction][category][k] = value;
-  }
-}
-
 module.exports = {
   mergeUnits,
   ensureCachedRepos,
   normalizeItalics,
   insertMissingPageLabels,
-  TestEngine,
+  readConfigFiles,
   readTestUnits,
+  readLibrary,
+  getCacheLoc
 }
 

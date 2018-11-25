@@ -1,4 +1,5 @@
-const { TestEngine, readTestUnits, normalizeItalics } = require('./lib');
+const { readTestUnits, normalizeItalics } = require('./lib');
+const { TestEngine } = require('./TestEngine');
 
 // This generates a JS array of each of the test units, with each test
 // transformed to include `result` and whether it `passed`. This is useful for
