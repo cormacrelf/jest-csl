@@ -27,13 +27,14 @@ function jestCSL(args) {
             jestTestCase(engine, test);
           }
           // mode: skip | only (not doc)
-          if (test.mode && it[test.mode]) {
-            it[test.mode](test.it, run);
+          let mode = test.mode === 'known' ? 'skip' : test.mode;
+          if (test.mode && it[mode]) {
+            it[mode](test.it, run);
           } else {
             if (test.expect) {
               it(test.it, run)
             } else {
-              it.skip(test.it, run); // stub
+              // it.skip(test.it, run); // stub
             }
           }
         })

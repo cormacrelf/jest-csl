@@ -296,10 +296,14 @@ The same works for `jurisdictionDirs` and `libraries`.
 
 #### Skipping or isolating tests
 
-You can add a `mode` to a test with the value `skip` or `only`. If it's `skip`, 
-it will be skipped; if >= 1 test has `only`, every test that isn't labelled 
-`only` will be skipped. Also, any test that does not have an `expect` key will 
-be skipped as a test stub, so you can write lots of unwritten tests as a to-do 
+You can add a `mode` to a test with the value `skip` or `only` or `known`. If
+it's `skip`, it will be skipped; if >= 1 test has `only`, every test that isn't
+labelled `only` will be skipped. `known` means it will be skipped in Jest, but
+will be included in the results output (for documenting failures but not
+polluting your test runner).
+
+Also, any test that does not have an `expect` key will 
+be skipped as a test stub, so you can write lots of unwritten `it` keys as a to-do 
 list.
 
 ```yaml
