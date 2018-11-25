@@ -35,7 +35,7 @@ const makeSys = (citations, jurisdictionDirs, myAbbreviations, gotAbbreviationCa
       if (t) ctx.trace(`found ${x}`)
       return t;
     }
-    jurisdictionDirs.push(_cacheLoc('style-modules'));
+    jurisdictionDirs.push(getCacheLoc('style-modules'));
     let ord = jurisdictionDirs
       .map(d => () => tryFile(path.join(d, id)));
     let ret = false;
