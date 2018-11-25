@@ -192,12 +192,14 @@ To test the abbreviations found in the Abbreviation Filter:
     - it: "should x"
       ...
       abbreviations:
-        - jurisdiction: default
-          hereinafter:
+        - hereinafter:
             doe2001: Misc
+        - jurisdiction: us
           container-title:
-            American Something Journal: ASJ
+            Coolest Tribunal Of The Land: CTL
 ```
+
+Without a `jurisdiction` specified, it is `default`.
 
 See this command's output for a list of allowed categories.
 
