@@ -16,6 +16,10 @@
     - it: 'should skip'
       mode: skip
 
+    - it: 'should have metadata'
+      meta: { included: true }
+      doc: "some docs"
+
 - describe: "macro flag"
   tests:
     - it: "should only render macro contents for single test, with no layout affixes"

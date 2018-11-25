@@ -22,6 +22,12 @@ describe("results object", () => {
     let u = units[0];
     expect(u.meta).toMatchObject({included: true});
     expect(u.doc).toBe("some docs");
+  });
+
+  it("includes meta and doc on a test", () => {
+    let t = units[0].tests.find(t => t.it === 'should have metadata');
+    expect(t.meta).toMatchObject({included: true});
+    expect(t.doc).toBe("some docs");
   })
 });
 
