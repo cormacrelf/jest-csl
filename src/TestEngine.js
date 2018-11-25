@@ -23,11 +23,12 @@ function replaceLayoutWithMacro(styleJson, macroName) {
     let layout = findLayoutNode(draft);
     if (!layout) { return null }
     // we add a dummy so that any auto-capitalization gets run on the dummy instead
-    // let prefix = { name: 'text', attrs: { value: "{{jest-csl-prefix}}" }, children: [""] };
+    // also, it has to be in a text node to work
+    let prefix = { name: 'text', attrs: { value: "{{jest-csl-prefix}}" }, children: [""] };
     let invoke = { name: 'text', attrs: { macro: macroName }, children: [""] };
-    layout.attrs.prefix = "{{jest-csl-prefix}}";
+    layout.attrs.prefix = "";
     layout.attrs.suffix = "";
-    layout.children = [invoke];
+    layout.children = [prefix, invoke];
   });
 }
 
