@@ -26,6 +26,17 @@
       macro: "AMacro"
       single: { id: "ITEM-1", locator: "a-locator" }
       expect: "a-locator"
+
+    - it: "should match empty macro with empty expect"
+      macro: "AMacro"
+      single: { id: "ITEM-1" }
+      expect: ""
+
+    - it: "should render macro contents with weird suffixes?"
+      macro: "AMacroBraced"
+      single: { id: "ITEM-1", locator: "a-locator" }
+      expect: "(a-locator)"
+
     - it: "should retain layout's delimiter"
       macro: "AMacro"
       sequence:

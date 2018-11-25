@@ -22,8 +22,10 @@ function replaceLayoutWithMacro(styleJson, macroName) {
   return produce(styleJson, (draft) => {
     let layout = findLayoutNode(draft);
     if (!layout) { return null }
+    // we add a dummy so that any auto-capitalization gets run on the dummy instead
+    // let prefix = { name: 'text', attrs: { value: "{{jest-csl-prefix}}" }, children: [""] };
     let invoke = { name: 'text', attrs: { macro: macroName }, children: [""] };
-    layout.attrs.prefix = "";
+    layout.attrs.prefix = "{{jest-csl-prefix}}";
     layout.attrs.suffix = "";
     layout.children = [invoke];
   });
@@ -128,7 +130,9 @@ class TestEngine {
     this.setAbbreviations(abbreviations);
     let citations = clusters.map((c, i) => this._atIndex(c, i+1))
     let out = engine.rebuildProcessorState(citations, format || 'html')
-    return out.map(o => o[2]);
+    return out.map(o => o[2]
+      .replace(/\{\{jest-csl-prefix\}\}/g, "")
+      .replace(/^\[CSL STYLE ERROR: reference with no printed form.\]$/, ""));
   }
 
   addAbbreviation(jurisdiction, category, key, value) {

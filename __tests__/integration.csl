@@ -11,6 +11,9 @@
   <macro name="AMacro">
     <text variable="locator" />
   </macro>
+  <macro name="AMacroBraced">
+    <text prefix="(" variable="locator" suffix=")" />
+  </macro>
   <citation>
     <layout delimiter="; " prefix="(" suffix=")">
       <choose>
