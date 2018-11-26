@@ -17,7 +17,7 @@ const git = require('simple-git/promise');
 
 async function cloneOrPull(url, repoDir, _branch, shouldPull) {
   let logger = log.getLogger('ensureCachedRepos');
-  mkdirp(repoDir);
+  await fse.mkdirp(repoDir);
   let repo = await git(repoDir);
   const isRepo = await repo.checkIsRepo();
   if (!isRepo) {
@@ -31,7 +31,7 @@ async function cloneOrPull(url, repoDir, _branch, shouldPull) {
       logger.info(`pulled repo ${repoDir}`)
     } catch (e) {
       await fse.remove(repoDir);
-      mkdirp(repoDir);
+      await fse.mkdirp(repoDir);
       repo = await git(repoDir);
       await repo.clone(url, repoDir);
       logger.debug(`re-cloned ${repoDir}`);
