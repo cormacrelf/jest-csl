@@ -13,25 +13,27 @@ const xdgBasedir = require('xdg-basedir');
 const fs = require('fs');
 const fse = require('fs-extra');
 const mkdirp = require('mkdirp');
-const git = require('nodegit');
+const git = require('simple-git/promise');
 
-function cloneOrPull(url, repoDir, branch, shouldPull) {
-  let repo;
+async function cloneOrPull(url, repoDir, _branch, shouldPull) {
   let logger = log.getLogger('ensureCachedRepos');
-  return git.Repository.open(repoDir)
-    .then(r => { repo = r; })
-    .then(async () => {
-      if (shouldPull) {
-        await repo.fetchAll();
-        await repo.mergeBranches(branch, 'origin/' + branch);
-        logger.info(`pulled repo ${repoDir}`);
-      }
-    })
-    .catch(async (e) => {
-      log.info(`repo ${repoDir} not cached; fetching`)
+  mkdirp(repoDir);
+  let repo = await git(repoDir);
+  const isRepo = await repo.checkIsRepo();
+  if (!isRepo) {
+    await git.clone(url, repoDir);
+    logger.info(`cloned repo ${repoDir}`)
+    repo = await git(repoDir);
+  } else if (shouldPull) {
+    try {
+      await repo.pull();
+      logger.info(`pulled repo ${repoDir}`)
+    } catch (e) {
       await fse.remove(repoDir);
-      await git.Clone(url, repoDir);
-    })
+      await git.clone(url, repoDir);
+    }
+  }
+  logger.debug(`no action necessary ${repoDir}`);
 }
 
 // returns a Promise
