@@ -2,6 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/jest-csl.svg)](https://npmjs.com/package/jest-csl)
 [![build](https://img.shields.io/travis/com/cormacrelf/jest-csl.svg)](https://travis-ci.com/cormacrelf/jest-csl)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fcormacrelf%2Fjest-csl.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fcormacrelf%2Fjest-csl?ref=badge_shield)
 
 This is a library to make testing [Citation Style Language][csl] definitions 
 easier using [`Jest`][jest]. It includes:
@@ -398,3 +399,7 @@ test case information and metadata.
 `engine` is a wrapper around CSL.Engine pre-loaded with your libraries.
 `engine.retrieveItem('citeKey')` may be useful to you.
 
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fcormacrelf%2Fjest-csl.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fcormacrelf%2Fjest-csl?ref=badge_large)
