@@ -32,6 +32,7 @@ easier using [`Jest`][jest]. It includes:
   or later.
 * You should install `yarn` with `npm install -g yarn`, or mentally replace 
   `yarn` in the rest of this document with `npm`.
+* You must have Git installed.
 
 ### Set up your project
 
