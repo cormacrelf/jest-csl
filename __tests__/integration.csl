@@ -42,5 +42,9 @@
     </layout>
   </citation>
   <!-- If you do not include a bibliography node, citeproc-js PANICS inscrutably. -->
-  <bibliography></bibliography>
+  <bibliography>
+    <layout>
+      <text value="abcde">
+    </layout>
+  </bibliography>
 </style>

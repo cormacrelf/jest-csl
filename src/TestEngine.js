@@ -125,6 +125,10 @@ class TestEngine {
     if (testCase.sequence) {
       return this.produceSequence(engine, testCase.sequence, fmt, testCase.abbreviations);
     }
+    if (testCase.bibliography) {
+      let _ = this.produceSequence(engine, testCase.bibliography, fmt, testCase.abbreviations);
+      return engine.makeBibliography();
+    }
   }
 
   produceSequence(engine, clusters, format, abbreviations) {

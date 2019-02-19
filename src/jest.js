@@ -56,6 +56,15 @@ function jestTestCase(engine, test) {
     }
     let out = engine.processTestCase(test);
     expect(out.map(normalizeItalics)).toMatchObject(test.expect.map(normalizeItalics));
+  } else if (test.bibliography && test.expect) {
+    if (!Array.isArray(test.expect)) {
+      throw new Error("sequence test.expect must be an array of strings");
+    }
+    let [_meta, bibEntries] = engine.processTestCase(test);
+    bibEntries = bibEntries.map(b => {
+      return typeof b === 'string' && b.replace(/^  <div class="csl-entry">(.*)<\/div>\n$/, "$1")
+    });
+    expect(bibEntries.map(normalizeItalics)).toMatchObject(test.expect.map(normalizeItalics));
   }
 }
 

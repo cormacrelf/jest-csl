@@ -44,3 +44,17 @@
           , { id: "ITEM-1", locator: "second-locator" } ]
       expect:
         - "a-locator; second-locator"
+
+- describe: "bibliography tests"
+  tests:
+    - it: "should reproduce verbatim text in plain mode"
+      format: text
+      bibliography:
+      - [{ id: "ITEM-1" }]
+      expect:
+      - "abcde"
+    - it: "should strip out surrounding div in html mode"
+      bibliography:
+      - [{ id: "ITEM-1" }]
+      expect:
+      - "abcde"
