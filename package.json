@@ -1,6 +1,6 @@
 {
   "name": "jest-csl",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "main": "index.js",
   "repository": "https://github.com/cormacrelf/jest-csl",
   "license": "MIT",
@@ -43,7 +43,7 @@
     "citeproc": ">=2.1.210"
   },
   "devDependencies": {
-    "jest": "^23.6.0",
-    "citeproc": "^2.1.210"
+    "citeproc": "^2.1.210",
+    "jest": "^23.6.0"
   }
 }
