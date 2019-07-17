@@ -25,7 +25,6 @@
   },
   "dependencies": {
     "chalk": "^2.4.1",
-    "citeproc": "^2.1.210",
     "commander": "^2.19.0",
     "fs-extra": "^7.0.1",
     "glob": "^7.1.3",
@@ -40,7 +39,11 @@
     "uuid": "^3.3.2",
     "xdg-basedir": "^3.0.0"
   },
+  "peerDependencies": {
+    "citeproc": ">=2.1.210"
+  },
   "devDependencies": {
-    "jest": "^23.6.0"
+    "jest": "^23.6.0",
+    "citeproc": "^2.1.210"
   }
 }
